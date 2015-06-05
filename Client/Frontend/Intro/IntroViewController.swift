@@ -15,22 +15,26 @@ struct IntroViewControllerUX {
 
     static let StartBrowsingButtonTitle = NSLocalizedString("Start Browsing", tableName: "Intro", comment: "Do not translate yet")
     static let StartBrowsingButtonColor = UIColor(rgb: 0x363B40)
-    static let StartBrowsingButtonHeight = 66
+    static let StartBrowsingButtonHeight = 56
     static let StartBrowsingButtonFont = UIFont.systemFontOfSize(18)
 
     static let SignInButtonTitle = NSLocalizedString("Sign in to Firefox", tableName: "Intro", comment: "Do not translate yet")
     static let SignInButtonColor = UIColor(red: 0.259, green: 0.49, blue: 0.831, alpha: 1.0)
     static let SignInButtonHeight = 46
-    static let SignInButtonFont = UIFont.systemFontOfSize(20)
-    static let SignInButtonCornerRadius = CGFloat(10)
+    static let SignInButtonFont = UIFont.systemFontOfSize(16, weight: UIFontWeightMedium)
+    static let SignInButtonCornerRadius = CGFloat(4)
 
     static let CardTextFont = UIFont.systemFontOfSize(16)
+    static let CardTitleFont = UIFont.systemFontOfSize(18, weight: UIFontWeightBold)
+    static let CardTextLineHeight = CGFloat(6)
 
-    static let Card1Text = NSLocalizedString("Browse the web with multiple tabs just like you’re used to.", tableName: "Intro", comment: "Do not translate yet.")
+    static let Card1Title = NSLocalizedString("Organize", tableName: "Intro", comment: "Do not translate yet.")
+    static let Card2Title = NSLocalizedString("Customize", tableName: "Intro", comment: "Do not translate yet.")
 
-    static let Card2Text = NSLocalizedString("Personalize your Firefox just the way you’d like in the Settings area.", tableName: "Intro", comment: "Do not translate yet.")
+    static let Card1Text = NSLocalizedString("Browse multiple Web pages at the same time with tabs.", tableName: "Intro", comment: "Do not translate yet.")
+    static let Card2Text = NSLocalizedString("Personalize your Firefox just the way you like in Settings.", tableName: "Intro", comment: "Do not translate yet.")
+    static let Card3Text = NSLocalizedString("Connect Firefox everywhere you use it.", tableName: "Intro", comment: "Do not translate yet.")
 
-    static let Card3Text = NSLocalizedString("Connect to Firefox Accounts anywhere you want.", tableName: "Intro", comment: "Do not translate yet.")
     static let Card3TextOffsetFromCenter = 10
     static let Card3ButtonOffsetFromCenter = 10
 
@@ -66,8 +70,15 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
     var forwardButton: UIButton!
     var signInButton: UIButton!
 
+    var slideVerticalScaleFactor: CGFloat = 1.0
+
     override func viewDidLoad() {
         view.backgroundColor = UIColor.whiteColor()
+
+        // scale the slides down for iPhone 4S
+        if view.frame.height <=  480 {
+            slideVerticalScaleFactor = 1.33
+        }
 
         //
 
@@ -128,24 +139,23 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
 
         let introView1 = UIView()
         introViews.append(introView1)
-        addLabelToIntroView(introView1, text: IntroViewControllerUX.Card1Text)
+        addLabelsToIntroView(introView1, text: IntroViewControllerUX.Card1Text, title: IntroViewControllerUX.Card1Title)
         addForwardButtonToIntroView(introView1)
 
         // Card 2
 
         let introView2 = UIView()
         introViews.append(introView2)
-        addLabelToIntroView(introView2, text: IntroViewControllerUX.Card2Text)
-        addBackButtonToIntroView(introView2)
-        addForwardButtonToIntroView(introView2)
+        addLabelsToIntroView(introView2, text: IntroViewControllerUX.Card2Text, title: IntroViewControllerUX.Card2Title)
+//        addBackButtonToIntroView(introView2)
+//        addForwardButtonToIntroView(introView2)
 
         // Card 3
 
         let introView3 = UIView()
         let label3 = UILabel()
         label3.numberOfLines = 0
-        label3.textAlignment = NSTextAlignment.Center
-        label3.text = IntroViewControllerUX.Card3Text
+        label3.attributedText = attributedStringForLabel(IntroViewControllerUX.Card3Text)
         label3.font = IntroViewControllerUX.CardTextFont
         introView3.addSubview(label3)
         label3.snp_makeConstraints { (make) -> Void in
@@ -163,6 +173,7 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
         signInButton.clipsToBounds = true
         signInButton.addTarget(self, action: "SELlogin", forControlEvents: UIControlEvents.TouchUpInside)
         introView3.addSubview(signInButton)
+
         signInButton.snp_makeConstraints { (make) -> Void in
             make.centerX.equalTo(introView3)
             make.top.equalTo(introView3.snp_centerY).offset(IntroViewControllerUX.Card3ButtonOffsetFromCenter)
@@ -186,7 +197,6 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
 
         // Make whoe screen scrollable
         view.bringSubviewToFront(scrollView)
-
         // Activate the first card
         setActiveIntroView(introViews[0])
     }
@@ -202,6 +212,7 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
         for i in 0..<IntroViewControllerUX.NumberOfCards {
             if let imageView = slideContainer.subviews[i] as? UIImageView {
                 imageView.frame = CGRect(x: CGFloat(i)*scaledWidthOfSlide, y: 0, width: scaledWidthOfSlide, height: scaledHeightOfSlide)
+                imageView.contentMode = UIViewContentMode.ScaleAspectFit
             }
         }
         slideContainer.frame = CGRect(x: 0, y: 0, width: scaledWidthOfSlide * CGFloat(IntroViewControllerUX.NumberOfCards), height: scaledHeightOfSlide)
@@ -304,13 +315,11 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
     }
 
     private var scaledHeightOfSlide: CGFloat {
-        return (view.frame.width / slides[0].size.width) * slides[0].size.height
+        return (view.frame.width / slides[0].size.width) * slides[0].size.height / slideVerticalScaleFactor
     }
 
     private func addForwardButtonToIntroView(introView: UIView) {
-        let button = UIButton()
-        button.setImage(UIImage(named: "forward"), forState: .Normal)
-        button.addTarget(self, action: "SELforward", forControlEvents: UIControlEvents.TouchUpInside)
+        let button = UIImageView(image: UIImage(named: "intro-arrow"))
         introView.addSubview(button)
         button.snp_makeConstraints { (make) -> Void in
             make.centerY.equalTo(introView)
@@ -318,28 +327,43 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
         }
     }
 
-    private func addBackButtonToIntroView(introView: UIView) {
-        let button = UIButton()
-        button.setImage(UIImage(named: "back"), forState: .Normal)
-        button.addTarget(self, action: "SELback", forControlEvents: UIControlEvents.TouchUpInside)
-        introView.addSubview(button)
-        button.snp_makeConstraints { (make) -> Void in
-            make.centerY.equalTo(introView)
-            make.left.equalTo(introView.snp_left).offset(IntroViewControllerUX.BackForwardButtonEdgeInset)
-        }
+    private func attributedStringForLabel(text: String) -> NSMutableAttributedString {
+        var paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = IntroViewControllerUX.CardTextLineHeight
+        paragraphStyle.alignment = .Center
+
+        var string = NSMutableAttributedString(string: text)
+        string.addAttribute(NSParagraphStyleAttributeName, value: paragraphStyle, range: NSMakeRange(0, string.length))
+        return string
     }
 
-    private func addLabelToIntroView(introView: UIView, text: String) {
+    private func addLabelsToIntroView(introView: UIView, text: String, title: String = "") {
         let label = UILabel()
+
         label.numberOfLines = 0
-        label.textAlignment = NSTextAlignment.Center
-        label.text = text
+        label.attributedText = attributedStringForLabel(text)
         label.font = IntroViewControllerUX.CardTextFont
         introView.addSubview(label)
         label.snp_makeConstraints { (make) -> Void in
             make.center.equalTo(introView)
-            make.width.equalTo(self.view.frame.width <= 320 ? 200 : 260) // TODO Talk to UX about small screen sizes
+            make.width.equalTo(self.view.frame.width <= 320 ? 240 : 280) // TODO Talk to UX about small screen sizes
         }
+
+        if !title.isEmpty {
+            let titleLabel = UILabel()
+            titleLabel.numberOfLines = 0
+            titleLabel.textAlignment = NSTextAlignment.Center
+            titleLabel.text = title
+            titleLabel.font = IntroViewControllerUX.CardTitleFont
+            introView.addSubview(titleLabel)
+            titleLabel.snp_makeConstraints { (make) -> Void in
+                make.top.equalTo(introView)
+                make.bottom.equalTo(label.snp_top)
+                make.centerX.equalTo(introView)
+                make.width.equalTo(self.view.frame.width <= 320 ? 240 : 280) // TODO Talk to UX about small screen sizes
+            }
+        }
+
     }
 }
 
