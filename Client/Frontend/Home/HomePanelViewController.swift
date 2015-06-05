@@ -21,13 +21,13 @@ protocol HomePanelViewControllerDelegate: class {
 }
 
 @objc
-protocol HomePanel: class {
+public protocol HomePanel: class {
     weak var homePanelDelegate: HomePanelDelegate? { get set }
     optional func endEditing()
 }
 
 @objc
-protocol HomePanelDelegate: class {
+public protocol HomePanelDelegate: class {
     func homePanel(homePanel: HomePanel, didSelectURL url: NSURL, visitType: VisitType)
     optional func homePanelWillEnterEditingMode(homePanel: HomePanel)
 }
